@@ -1,0 +1,11 @@
+This is a React Native application, just to get starting with.
+
+To run device emulator from command line:
+  - cd ~
+  - source .bash_profile
+  - cd Android/Sdk/emulator
+  - emulator -list-avds
+  - emulator -avd my_emulator_name
+
+Ref:
+  - https://stackoverflow.com/questions/27202353/how-to-open-the-avd-manager-on-ubuntu-linux-from-the-command-line

@@ -7,9 +7,6 @@ buildscript {
         compileSdkVersion = 27
         targetSdkVersion = 26
         supportLibVersion = "27.1.1"
-        react = [
-            nodeExecutableAndArgs: ["/home/cesarl/.nvm/versions/node/v9.11.2/bin/node"]
-        ]
     }
     repositories {
         jcenter()

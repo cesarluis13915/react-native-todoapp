@@ -1,18 +1,43 @@
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View, ListView, Keyboard } from 'react-native';
 import Header from './Header';
 import Footer from './Footer';
+import Row from './row';
 
 export default class App extends Component {
   constructor(props) {
     super(props);
 
+    const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+
     this.state = {
+      allComplete: false,
       value: '',
-      items: []
+      items: [],
+      dataSource: ds.cloneWithRows([])
     };
 
+    this.setSource = this.setSource.bind(this);
     this.handleAddItem = this.handleAddItem.bind(this);
+    this.handleToggleAllComplete = this.handleToggleAllComplete.bind(this);
+  }
+
+  setSource(items, itemDataSource, otherState = {}) {
+    this.setState({
+      items,
+      dataSource: this.state.dataSource.cloneWithRows(itemDataSource),
+      ...otherState
+    });
+  }
+
+  handleToggleAllComplete() {
+    const complete = !this.state.allComplete;
+    const newItems = this.state.items.map((item) => ({
+      ...item,
+      complete
+    }));
+
+    this.setSource(newItems, newItems, { allComplete: complete });
   }
 
   handleAddItem() {
@@ -27,10 +52,7 @@ export default class App extends Component {
       }
     ];
 
-    this.setState({
-      items: newItems,
-      value: ''
-    });
+    this.setSource(newItems, newItems, { value: '' });
   }
 
   render() {
@@ -40,8 +62,26 @@ export default class App extends Component {
           value={this.state.value}
           onAddItem={this.handleAddItem}
           onChange={(value) => this.setState({ value })}
+          onToggleAllComplete={this.onToggleAllComplete}
         />
         <View style={styles.content}>
+          <ListView
+            style={styles.list}
+            enabledEmptySections
+            dataSource={this.state.dataSource}
+            onScroll={() => Keyboard.dimiss()}
+            renderRow={({key, ...value}) => {
+              return (
+                <Row
+                  key={key}
+                  {...value}
+                />
+              );
+            }}
+            renderSeparator={(sectionId, rowId) => {
+              return <View key={rowId} style={styles.separator}/>
+            }}
+          />
         </View>
         <Footer />
       </View>
@@ -56,5 +96,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1
+  },
+  list: {
+    backgroundColor: '#FFF'
+  },
+  separator: {
+    borderWidth: 1,
+    borderColor: '#F5F5F5'
   }
 });

@@ -4,6 +4,14 @@ import Header from './Header';
 import Footer from './Footer';
 import Row from './row';
 
+const filterItems = (filter, items) => {
+  return items.filter((item) => {
+    if (filter === 'ALL') return true;
+    if (filter === 'COMPLETED') return item.complete;
+    if (filter === 'ACTIVE') return !item.complete;
+  });
+}
+
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -12,16 +20,19 @@ export default class App extends Component {
 
     this.state = {
       allComplete: false,
+      filter: 'ALL',
       value: '',
       items: [],
       dataSource: ds.cloneWithRows([])
     };
 
     this.setSource = this.setSource.bind(this);
+    this.handleFilter = this.handleFilter.bind(this);
     this.handleRemoveItem = this.handleRemoveItem.bind(this);
     this.handleAddItem = this.handleAddItem.bind(this);
     this.handleToggleComplete = this.handleToggleComplete.bind(this);
     this.handleToggleAllComplete = this.handleToggleAllComplete.bind(this);
+    this.handleClearComplete = this.handleClearComplete.bind(this);
   }
 
   setSource(items, itemDataSource, otherState = {}) {
@@ -32,12 +43,16 @@ export default class App extends Component {
     });
   }
 
+  handleFilter(filter) {
+    this.setSource(this.state.items, filterItems(filter, this.state.items), { filter });
+  }
+
   handleRemoveItem(key) {
     const newItems = this.state.items.filter((item) => {
       return item.key !== key;
     });
 
-    this.setSource(newItems, newItems);
+    this.setSource(newItems, filterItems(this.state.filter, newItems));
   }
 
   handleToggleComplete(key, complete) {
@@ -50,7 +65,7 @@ export default class App extends Component {
       };
     });
 
-    this.setSource(newItems, newItems);
+    this.setSource(newItems, filterItems(this.state.filter, newItems));
   }
 
   handleToggleAllComplete() {
@@ -60,7 +75,7 @@ export default class App extends Component {
       complete
     }));
 
-    this.setSource(newItems, newItems, { allComplete: complete });
+    this.setSource(newItems, filterItems(this.state.filter, newItems), { allComplete: complete });
   }
 
   handleAddItem() {
@@ -75,7 +90,13 @@ export default class App extends Component {
       }
     ];
 
-    this.setSource(newItems, newItems, { value: '' });
+    this.setSource(newItems, filterItems(this.state.filter, newItems), { value: '' });
+  }
+
+  handleClearComplete() {
+    const newItems = filterItems('ACTIVE', this.state.items);
+
+    this.setSource(newItems, filterItems(this.state.filter, newItems));
   }
 
   render() {
@@ -108,7 +129,12 @@ export default class App extends Component {
             }}
           />
         </View>
-        <Footer />
+        <Footer
+          count={filterItems('ACTIVE', this.state.items).length}
+          filter={this.state.filter}
+          onFilter={this.handleFilter}
+          onClearComplete={this.handleClearComplete}
+        />
       </View>
     );
   }

@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   complete: {
-    textDecorationLine: "line-through"
+    textDecorationLine: 'line-through'
   },
   text: {
     fontSize: 24,

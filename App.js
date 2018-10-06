@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Platform, StyleSheet, View, ListView, Keyboard } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, ListView, Keyboard, AsyncStorage } from 'react-native';
 import Header from './Header';
 import Footer from './Footer';
 import Row from './row';
@@ -19,6 +19,7 @@ export default class App extends Component {
     const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
 
     this.state = {
+      loading: true,
       allComplete: false,
       filter: 'ALL',
       value: '',
@@ -33,6 +34,22 @@ export default class App extends Component {
     this.handleToggleComplete = this.handleToggleComplete.bind(this);
     this.handleToggleAllComplete = this.handleToggleAllComplete.bind(this);
     this.handleClearComplete = this.handleClearComplete.bind(this);
+    this.handleUpdateText = this.handleUpdateText.bind(this);
+    this.handleToggleEditing = this.handleToggleEditing.bind(this);
+  }
+
+  componentWillMount() {
+    AsyncStorage.getItem('items').then((json) => {
+      try {
+        const items = JSON.parse(json);
+
+        this.setSource(items, items, { loading: false });
+      } catch (error) {
+       this.setState({
+         loading: false
+       });
+      }
+    });
   }
 
   setSource(items, itemDataSource, otherState = {}) {
@@ -41,6 +58,8 @@ export default class App extends Component {
       dataSource: this.state.dataSource.cloneWithRows(itemDataSource),
       ...otherState
     });
+
+    AsyncStorage.setItem('items', JSON.stringify(items));
   }
 
   handleFilter(filter) {
@@ -99,6 +118,32 @@ export default class App extends Component {
     this.setSource(newItems, filterItems(this.state.filter, newItems));
   }
 
+  handleToggleEditing(key, editing) {
+    const newItems = this.state.items.map((item) => {
+      if (item.key !== key) return item;
+
+      return {
+        ...item,
+        editing
+      };
+    });
+
+    this.setSource(newItems, filterItems(this.state.filter, newItems));
+  }
+
+  handleUpdateText(key, text) {
+    const newItems = this.state.items.map((item) => {
+      if (item.key !== key) return item;
+
+      return {
+        ...item,
+        text
+      };
+    });
+
+    this.setSource(newItems, filterItems(this.state.filter, newItems));
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -118,6 +163,8 @@ export default class App extends Component {
               return (
                 <Row
                   key={key}
+                  onUpdate={(text) => this.handleUpdateText(key, text)}
+                  onToggleEdit={(editing) => this.handleToggleEditing(key, editing)}
                   onRemove={() => this.handleRemoveItem(key)}
                   onComplete={(complete) => this.handleToggleComplete(key, complete)}
                   {...value}
@@ -135,6 +182,12 @@ export default class App extends Component {
           onFilter={this.handleFilter}
           onClearComplete={this.handleClearComplete}
         />
+        {this.state.loading && <View style={styles.loading}>
+            <ActivityIndicator
+              animating
+              size='large'
+            />
+        </View>}
       </View>
     );
   }
@@ -154,5 +207,15 @@ const styles = StyleSheet.create({
   separator: {
     borderWidth: 1,
     borderColor: '#F5F5F5'
+  },
+  loading: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)'
   }
 });
